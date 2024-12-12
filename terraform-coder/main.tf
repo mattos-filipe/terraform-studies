@@ -178,14 +178,15 @@ resource "docker_image" "main" {
 }
 
 resource "docker_container" "workspace" {
-  #count = data.coder_workspace.me.start_count
-  image = "terraform-coder"
+  count = data.coder_workspace.me.start_count
+  image = docker_image.main.name
   # Uses lower() to avoid Docker restriction on container names.
   name = "coder-${data.coder_workspace_owner.me.name}-${lower(data.coder_workspace.me.name)}"
   # Hostname makes the shell more user friendly: coder@my-workspace:~$
   hostname = data.coder_workspace.me.name
   # Use the docker gateway if the access URL is 127.0.0.1
-  entrypoint = ["sh", "-c", replace(coder_agent.main.init_script, "/localhost|127\\.0\\.0\\.1/", "host.docker.internal")]
+  entrypoint = ["sh", "-c", replace(coder_agent.main.startup_script, "/localhost|127\\.0\\.0\\.1/", "host.docker.internal")]
+  #entrypoint = ["sleep", "infinity"]
   env        = ["CODER_AGENT_TOKEN=${coder_agent.main.token}"]
   host {
     host = "host.docker.internal"
@@ -214,4 +215,11 @@ resource "docker_container" "workspace" {
     label = "coder.workspace_name"
     value = data.coder_workspace.me.name
   }
+}
+
+output "coder_agend_init_scrip" {
+  value = coder_agent.main.init_script
+}
+output "coder_agend_startup_scrip" {
+  value = coder_agent.main.startup_script
 }
