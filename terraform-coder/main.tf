@@ -1,5 +1,5 @@
 terraform {
-    required_providers {
+  required_providers {
     coder = {
       source = "coder/coder"
     }
@@ -185,12 +185,16 @@ resource "docker_container" "workspace" {
   # Hostname makes the shell more user friendly: coder@my-workspace:~$
   hostname = data.coder_workspace.me.name
   # Use the docker gateway if the access URL is 127.0.0.1
-  entrypoint = ["sh", "-c", replace(coder_agent.main.startup_script, "/localhost|127\\.0\\.0\\.1/", "host.docker.internal")]
-  #entrypoint = ["sleep", "infinity"]
+  # entrypoint = ["sh", "-c", replace(coder_agent.main.init_script, "/localhost|127\\.0\\.0\\.1/", "host.docker.internal")]
+  entrypoint = ["sleep", "infinity"]
   env        = ["CODER_AGENT_TOKEN=${coder_agent.main.token}"]
   host {
     host = "host.docker.internal"
     ip   = "host-gateway"
+  }
+  ports {
+    internal = 13337
+    external = 13337
   }
   volumes {
     container_path = "/home/${local.username}"
@@ -215,11 +219,14 @@ resource "docker_container" "workspace" {
     label = "coder.workspace_name"
     value = data.coder_workspace.me.name
   }
+  
 }
-
-output "coder_agend_init_scrip" {
-  value = coder_agent.main.init_script
+output "init_script" {
+    value = coder_agent.main.init_script
 }
-output "coder_agend_startup_scrip" {
-  value = coder_agent.main.startup_script
+output "startup_script" {
+    value = coder_agent.main.startup_script
+}
+output "username" {
+    value = local.username
 }
